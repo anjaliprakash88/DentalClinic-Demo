@@ -14,8 +14,11 @@ class User(AbstractUser):
         return self.username
 
 class Branch(models.Model):
-    name = models.CharField(max_length=255, unique=True)
+    name = models.CharField(max_length=255)
 
+
+
+# -------------------------DOCTOR MODEL--------------------------------------------
 class Doctor(models.Model):
     user = models.OneToOneField(User, related_name="doctor", on_delete=models.CASCADE)
     branch = models.ForeignKey(Branch, related_name="doctors", on_delete=models.CASCADE)
@@ -29,3 +32,16 @@ class Doctor(models.Model):
     qualification = models.CharField(max_length=255)
     phone_number = models.CharField(max_length=15, unique=True)
     address = models.TextField(blank=True, null=True)
+
+
+# ---------------------- Pharmacy Model ----------------------
+class Pharmacy(models.Model):
+    user = models.OneToOneField(User, related_name="pharmacy", on_delete=models.CASCADE)
+    branch = models.ForeignKey(Branch, related_name="pharmacys", on_delete=models.CASCADE)
+    experience_years = models.PositiveIntegerField()
+    qualification = models.CharField(max_length=255)
+    phone_number = models.CharField(max_length=15, unique=True)
+    address = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return self.user.username
