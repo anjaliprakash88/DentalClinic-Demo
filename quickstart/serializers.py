@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Doctor, User, Branch, Pharmacy
+from .models import Doctor, User, Branch, Pharmacy, Receptionist
 import random, string
 from django.core.mail import send_mail
 from django.conf import settings
@@ -116,3 +116,36 @@ class PharmacyLoginSerializer(serializers.Serializer):
         if not user.is_pharmacy:
             raise serializers.ValidationError('you are not authorized as a Pharmacist')
         return  {'user':user}
+
+#----------------------Reception--------------------------------
+
+class ReceptionSerializer(serializers.ModelSerializer):
+    user = UserSerializer()
+    branch = BranchSerializer()
+    class Meta:
+        model = Receptionist
+        fields = '__all__'
+
+    def create(self, validated_data):
+        user_data = validated_data.pop('user', None)
+        branch_data = validated_data.pop('branch')
+
+        branch_instance, created = Branch.objects.get_or_create(**branch_data)
+        password = user_data.pop('password', None)
+        user_instance = User(**user_data)
+        user_instance.set_password(password)
+        user_instance.is_reception=True
+        user_instance.save()
+
+        reception_id_number = f"A{random.choice(string.ascii_uppercase)}{random.randint(1000, 9999)}"
+        reception_instance = Receptionist.objects.create(user=user_instance, branch=branch_instance, **validated_data)
+        self.send_reception_id_email(user_instance.email, reception_id_number)
+        return  reception_instance
+
+
+    def send_reception_id_email(self, email, reception_id_number):
+        subject ="Your Receptionist ID Number"
+        message = f"Dear Receptionist, \n\n Your Receptionist ID number is: {reception_id_number}. \n\n Thank You !"
+        from_email = settings.DEFAULT_FROM_EMAIL
+
+        send_mail(subject, message, from_email, [email])

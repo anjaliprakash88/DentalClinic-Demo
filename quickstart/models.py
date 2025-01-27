@@ -45,3 +45,15 @@ class Pharmacy(models.Model):
 
     def __str__(self):
         return self.user.username
+
+# ------------------------Receptionist----------------------------------
+class Receptionist(models.Model):
+    user = models.OneToOneField(User, related_name="receptionist", on_delete=models.CASCADE)
+    branch = models.ForeignKey(Branch, related_name="receptionists", on_delete=models.CASCADE)
+    experience_years = models.PositiveIntegerField()
+    qualification = models.CharField(max_length=255)
+    phone_number = models.CharField(max_length=15, unique=True)
+    address = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return self.user.username

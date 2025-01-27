@@ -2,12 +2,14 @@ from django.core.serializers import serialize
 from django.shortcuts import render
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Doctor, Pharmacy
-from .serializers import DoctorSerializer, DoctorLoginSerializer, PharmacySerializer, PharmacyLoginSerializer
+from .models import Doctor, Pharmacy, Receptionist
+from .serializers import DoctorSerializer, DoctorLoginSerializer, PharmacySerializer, PharmacyLoginSerializer, ReceptionSerializer
 from rest_framework.views import APIView
 from django.contrib.auth import authenticate, login
 from rest_framework.authtoken.models import Token
-
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+from rest_framework.permissions import AllowAny
 
 class DoctorCreate(APIView):
     def get(self, request):
@@ -60,3 +62,18 @@ class PharmacyLoginView(APIView):
             token, created =Token.objects.get_or_create(user=user)
             return Response({"message":"Login Successful", "token":token.key}, status=status.HTTP_200_OK)
         return Response({"message":"Invalid credentials", "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+
+# --------------------------RECEPTION ---------------------------------
+class ReceptionCreate(APIView):
+    permission_classes = [AllowAny]
+    def get(self, request):
+        reception_data =Receptionist.objects.select_related('user', 'branch').all()
+        serializer = ReceptionSerializer(reception_data, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    def post(self, request):
+        serializer = ReceptionSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
