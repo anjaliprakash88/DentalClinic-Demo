@@ -3,12 +3,11 @@ from django.shortcuts import render
 from rest_framework.response import Response
 from rest_framework import status
 from .models import Doctor, Pharmacy, Receptionist
-from .serializers import DoctorSerializer, DoctorLoginSerializer, PharmacySerializer, PharmacyLoginSerializer, ReceptionSerializer
+from .serializers import DoctorSerializer, DoctorLoginSerializer, PharmacySerializer, PharmacyLoginSerializer, ReceptionSerializer, ReceptionLoginSerializer
+
 from rest_framework.views import APIView
 from django.contrib.auth import authenticate, login
 from rest_framework.authtoken.models import Token
-from django.views.decorators.csrf import csrf_exempt
-from django.utils.decorators import method_decorator
 from rest_framework.permissions import AllowAny
 
 class DoctorCreate(APIView):
@@ -77,3 +76,14 @@ class ReceptionCreate(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ReceptionLoginView(APIView):
+    def post(self, request):
+        serializer = ReceptionLoginSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.validated_data['user']
+            login(request, user)
+            token, created =Token.objects.get_or_create(user=user)
+            return Response({"message":"Login Successful", "token":token.key}, status=status.HTTP_200_OK)
+        return Response({"message":"Invalid credentials", "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)

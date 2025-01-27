@@ -149,3 +149,17 @@ class ReceptionSerializer(serializers.ModelSerializer):
         from_email = settings.DEFAULT_FROM_EMAIL
 
         send_mail(subject, message, from_email, [email])
+
+
+class ReceptionLoginSerializer(serializers.Serializer):
+    username = serializers.CharField()
+    password = serializers.CharField(write_only=True)
+    def validate(self, data):
+        username = data.get('username')
+        password = data.get('password')
+        user = authenticate(username=username, password=password)
+        if not user:
+            raise serializers.ValidationError("Invalid credentials")
+        if not user.is_reception:
+            raise serializers.ValidationError('you are not authorized as a Pharmacist')
+        return  {'user':user}
