@@ -37,7 +37,6 @@ class Doctor(models.Model):
 # ---------------------- Pharmacy Model ----------------------
 class Pharmacy(models.Model):
     user = models.OneToOneField(User, related_name="pharmacy", on_delete=models.CASCADE)
-    branch = models.ForeignKey(Branch, related_name="pharmacys", on_delete=models.CASCADE)
     experience_years = models.PositiveIntegerField()
     qualification = models.CharField(max_length=255)
     phone_number = models.CharField(max_length=15, unique=True)

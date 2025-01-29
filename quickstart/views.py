@@ -2,6 +2,7 @@ from django.core.serializers import serialize
 from django.shortcuts import render
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.renderers import TemplateHTMLRenderer, JSONRenderer
 from .models import Doctor, Pharmacy, Receptionist
 from .serializers import DoctorSerializer, DoctorLoginSerializer, PharmacySerializer, PharmacyLoginSerializer, ReceptionSerializer, ReceptionLoginSerializer
 
@@ -40,10 +41,13 @@ class DoctorLoginView(APIView):
 
 # --------------------------PHARMACY ---------------------------------
 class PharmacyCreate(APIView):
+    renderer_classes = [TemplateHTMLRenderer, JSONRenderer]
+    template_name = 'pharmacy_profile_creation.html'
+
     def get(self, request):
-        pharmacy_data =Pharmacy.objects.select_related('user', 'branch').all()
-        serializer = PharmacySerializer(pharmacy_data, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        pharmacies = Pharmacy.objects.all()
+        serializer = PharmacySerializer(pharmacies, many=True)
+        return Response({"serializer": serializer.data}, status=status.HTTP_200_OK)
     def post(self, request):
         serializer = PharmacySerializer(data=request.data)
         if serializer.is_valid():

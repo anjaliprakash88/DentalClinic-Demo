@@ -4,11 +4,13 @@ import random, string
 from django.core.mail import send_mail
 from django.conf import settings
 from django.contrib.auth import authenticate
+from django.contrib.auth import get_user_model
+
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'username', 'first_name', 'last_name', 'email', 'password']
+        fields = ['id', 'first_name', 'last_name', 'email']
         extra_kwargs = {'password': {'write_only': True}}  # Hide password in responses
 
 class BranchSerializer(serializers.ModelSerializer):
@@ -75,34 +77,51 @@ class DoctorLoginSerializer(serializers.Serializer):
 
 class PharmacySerializer(serializers.ModelSerializer):
     user = UserSerializer()
-    branch = BranchSerializer()
+
     class Meta:
         model = Pharmacy
-        fields = '__all__'
+        fields = ['id', 'experience_years', 'qualification', 'phone_number', 'address', 'user']
 
     def create(self, validated_data):
         user_data = validated_data.pop('user', None)
-        branch_data = validated_data.pop('branch')
 
-        branch_instance, created = Branch.objects.get_or_create(**branch_data)
+        # Generate a random password if not provided
         password = user_data.pop('password', None)
-        user_instance = User(**user_data)
+        if not password:
+            password = self._generate_random_password()
+
+        # Generate the username from the first and last name if not provided
+        username = user_data.get('username', None)
+        if not username:
+            username = f"{user_data['first_name'].lower()}_{user_data['last_name'].lower()}"
+
+        # Create the user instance
+        user_instance = get_user_model()(**user_data)
+        user_instance.username = username  # Set the generated username
         user_instance.set_password(password)
-        user_instance.is_pharmacy=True
+        user_instance.is_pharmacy = True
         user_instance.save()
 
-        pharmacy_id_number = f"A{random.choice(string.ascii_uppercase)}{random.randint(1000, 9999)}"
-        pharmacy_instance = Pharmacy.objects.create(user=user_instance, branch=branch_instance, **validated_data)
-        self.send_pharmacy_id_email(user_instance.email, pharmacy_id_number)
-        return  pharmacy_instance
+        # Create the Pharmacy instance
+        pharmacy_instance = Pharmacy.objects.create(user=user_instance, **validated_data)
 
+        # Send the email with the username and password
+        self.send_pharmacy_id_email(user_instance.email, user_instance.username, password)
 
-    def send_pharmacy_id_email(self, email, pharmacy_id_number):
-        subject ="Your Pharmacist ID Number"
-        message = f"Dear Pharmacist, \n\n Your Pharmacist ID number is: {pharmacy_id_number}. \n\n Thank You !"
+        return pharmacy_instance
+
+    def send_pharmacy_id_email(self, email, username, password):
+        subject = "Your Pharmacy Account Details"
+        message = f"Dear Pharmacist,\n\nYour account has been created. Here are your login details:\n\nUsername: {username}\nPassword: {password}\n\nThank you!"
         from_email = settings.DEFAULT_FROM_EMAIL
 
         send_mail(subject, message, from_email, [email])
+
+    def _generate_random_password(self):
+        # Generate a random password (you can adjust the length and characters as needed)
+        password = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
+        return password
+
 
 class PharmacyLoginSerializer(serializers.Serializer):
     username = serializers.CharField()

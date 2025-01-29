@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pharmacy Registration</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <div class="modal-body">
+        <form id="creation">
+            {% csrf_token %}  <!-- CSRF Token for Django -->
+
+            <label>Address</label>
+            <input type="text" id="modal-address" placeholder="Enter address" required>
+
+            <label>Experience Years</label>
+            <input type="number" id="modal-experience-years" placeholder="Enter experience years" required>
+
+            <label>Qualification</label>
+            <input type="text" id="modal-qualification" placeholder="Enter qualification" required>
+
+            <label>Phone Number</label>
+            <input type="tel" id="modal-phone-number" placeholder="Enter phone number" required>
+
+            <label>First Name</label>
+            <input type="text" id="modal-first-name" placeholder="Enter first name" required>
+
+            <label>Last Name</label>
+            <input type="text" id="modal-last-name" placeholder="Enter last name" required>
+
+            <label>Email</label>
+            <input type="email" id="modal-email" placeholder="Enter email" required>
+
+            <input type="submit" value="Register">
+        </form>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            $('#creation').on('submit', function(event) {
+                event.preventDefault();  // Prevent form refresh
+
+                // Get CSRF Token
+                const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+                // Collect Data
+                const data = {
+                    address: $('#modal-address').val(),
+                    experience_years: parseInt($('#modal-experience-years').val(), 10),
+                    qualification: $('#modal-qualification').val(),
+                    phone_number: $('#modal-phone-number').val(),
+                    user: {
+                        first_name: $('#modal-first-name').val(),
+                        last_name: $('#modal-last-name').val(),
+                        email: $('#modal-email').val(),
+                    }
+                };
+
+                // AJAX Request
+                $.ajax({
+                    url: `/pharmacy/`,
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(data),
+                    headers: {
+                        "X-CSRFToken": csrftoken  // Add CSRF Token
+                    },
+                })
+                .done(function(response) {
+                    alert('Pharmacy and user details updated successfully');
+                    $('.modal-overlay, .modal').fadeOut();
+                    fetchPharmacy();  // Refresh data
+                })
+                .fail(function(xhr) {
+                    alert(`Failed to update pharmacy details: ${xhr.responseJSON?.error || xhr.statusText || 'Unknown error'}`);
+                });
+            });
+
+            // Dummy function to prevent errors
+            function fetchPharmacy() {
+                console.log("Fetching pharmacy data..."); // Implement actual logic
+            }
+        });
+    </script>
+</body>
+</html>
