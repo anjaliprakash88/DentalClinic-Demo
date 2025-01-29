@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pharmacy Registration</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <div class="modal-body">
+        <form id="creation">
+            {% csrf_token %}
+
+            <label>Branch Name</label>
+            <input type="text" id="modal-name"  required>
+
+            <label>Address</label>
+            <input type="text" id="modal-address" placeholder="Enter address" required>
+
+            <label>Phone Number</label>
+            <input type="tel" id="modal-phone-number" placeholder="Enter phone number" required>
+
+            <label>Email</label>
+            <input type="email" id="modal-email" placeholder="Enter email" required>
+
+            <label>Is Active</label>
+            <input type="checkbox" id="modal-is-active" checked>
+
+            <input type="submit" value="Register">
+        </form>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            $('#creation').on('submit', function(event) {
+                event.preventDefault();
+
+
+                const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+                const data = {
+                    name: $('#modal-name').val(),
+                    address: $('#modal-address').val(),
+                    phone_number: $('#modal-phone-number').val(),
+                    email_address: $('#modal-email').val(),
+                    is_active: $('#modal-is-active').prop('checked')
+                };
+
+                $.ajax({
+                    url: `/branch/`,
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(data),
+                    headers: {
+                        "X-CSRFToken": csrftoken
+                    },
+                })
+                .done(function(response) {
+                    alert('branch created successfully');
+                    $('.modal-overlay, .modal').fadeOut();
+                    fetchBranch();
+                })
+                .fail(function(xhr) {
+                    alert(`Failed to create branch: ${xhr.responseJSON?.error || xhr.statusText || 'Unknown error'}`);
+                });
+            });
+
+
+            function fetchBranch() {
+                console.log("Fetching pharmacy data...");
+            }
+        });
+    </script>
+</body>
+</html>
