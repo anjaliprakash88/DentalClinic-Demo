@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reception Registration</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <div class="modal-body">
+        <form id="creation">
+            {% csrf_token %}
+
+            <label>Address</label>
+            <input type="text" id="modal-address" placeholder="Enter address" required>
+
+            <label>Experience Years</label>
+            <input type="number" id="modal-experience-years" placeholder="Enter experience years" required>
+
+            <label>Qualification</label>
+            <input type="text" id="modal-qualification" placeholder="Enter qualification" required>
+
+            <label>Phone Number</label>
+            <input type="tel" id="modal-phone-number" placeholder="Enter phone number" required>
+
+            <label>First Name</label>
+            <input type="text" id="modal-first-name" placeholder="Enter first name" required>
+
+            <label>Last Name</label>
+            <input type="text" id="modal-last-name" placeholder="Enter last name" required>
+
+            <label>Email</label>
+            <input type="email" id="modal-email" placeholder="Enter email" required>
+
+            <label>Branch</label>
+            <select id="model-branch" required>
+                <option value="">Select a Branch</option>
+            </select>
+
+            <input type="submit" value="Register">
+        </form>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+          function fetchBranches() {
+    $.ajax({
+        url: `/branch/`,
+        type: 'GET',
+        headers:{
+            "X-Requested-With":"XMLHttpRequest"
+            },
+        success: function(response) {
+    console.log("Branch API Response:", response);
+    const branchSelect = $('#model-branch');
+    branchSelect.empty();
+    branchSelect.append(`<option value="">Select a branch</option>`);
+
+
+    if (Array.isArray(response)) {
+        response.forEach(branch => {
+            branchSelect.append(`<option value="${branch.id}">${branch.name}</option>`);
+        });
+    } else {
+        console.error("Expected an array but got:", response);
+        alert("Error: Unexpected data format received!");
+    }
+},
+
+        error: function(xhr) {
+            alert(`Failed to fetch branches: ${xhr.statusText}`);
+        }
+    });
+}
+
+            fetchBranches();
+
+
+            $('#creation').on('submit', function(event) {
+                event.preventDefault();
+
+
+                const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+                // Collect Data
+                const data = {
+                    address: $('#modal-address').val(),
+                    experience_years: parseInt($('#modal-experience-years').val(), 10),
+                    qualification: $('#modal-qualification').val(),
+                    phone_number: $('#modal-phone-number').val(),
+                    branch: parseInt($('#model-branch').val(), 10),
+                    user: {
+                        first_name: $('#modal-first-name').val(),
+                        last_name: $('#modal-last-name').val(),
+                        email: $('#modal-email').val(),
+                    }
+
+
+                };
+
+console.log("Data Being sent: ", data);
+                $.ajax({
+    url: `/reception/`,
+    type: 'POST',
+    contentType: 'application/json',
+    data: JSON.stringify(data),
+    headers: {
+        "X-CSRFToken": csrftoken
+    },
+})
+
+                .done(function(response) {
+                    alert('reception and user details updated successfully');
+                    $('.modal-overlay, .modal').fadeOut();
+                    fetchReception();
+                })
+                .fail(function(xhr) {
+                    alert(`Failed to update reception details: ${xhr.responseJSON?.error || xhr.statusText || 'Unknown error'}`);
+                });
+            });
+
+
+            function fetchReception() {
+                console.log("Fetching pharmacy data...");
+            }
+        });
+    </script>
+</body>
+</html>

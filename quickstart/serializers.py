@@ -150,34 +150,46 @@ class PharmacyLoginSerializer(serializers.Serializer):
 
 class ReceptionSerializer(serializers.ModelSerializer):
     user = UserSerializer()
-    branch = BranchSerializer()
+    branch = serializers.PrimaryKeyRelatedField(queryset=Branch.objects.all(), required=True)
     class Meta:
         model = Receptionist
-        fields = '__all__'
+        fields = ['id', 'experience_years', 'qualification', 'phone_number', 'address', 'user', 'branch']
 
     def create(self, validated_data):
         user_data = validated_data.pop('user', None)
-        branch_data = validated_data.pop('branch')
 
-        branch_instance, created = Branch.objects.get_or_create(**branch_data)
         password = user_data.pop('password', None)
-        user_instance = User(**user_data)
+        if not password:
+            password=self._generate_random_password()
+
+        username=user_data.get('username', None)
+        if not username:
+            username = f"{user_data['first_name'].lower()}_{user_data['last_name'].lower()}"
+
+        user_instance = get_user_model()(**user_data)
+        user_instance.username = username
         user_instance.set_password(password)
         user_instance.is_reception=True
         user_instance.save()
 
-        reception_id_number = f"A{random.choice(string.ascii_uppercase)}{random.randint(1000, 9999)}"
-        reception_instance = Receptionist.objects.create(user=user_instance, branch=branch_instance, **validated_data)
-        self.send_reception_id_email(user_instance.email, reception_id_number)
+        reception_instance = Receptionist.objects.create(
+            user = user_instance,
+            **validated_data
+        )
+        self.send_reception_id_email(user_instance.email, user_instance.username, password)
         return  reception_instance
 
 
-    def send_reception_id_email(self, email, reception_id_number):
-        subject ="Your Receptionist ID Number"
-        message = f"Dear Receptionist, \n\n Your Receptionist ID number is: {reception_id_number}. \n\n Thank You !"
+    def send_reception_id_email(self, email, username, password):
+        subject ="Your Receptionist Account Details"
+        message = f"Dear Receptionist,\n\n Your account has been created. Here the login details \n\n Username: {username}\nPassword:{password} \n\n Thank You !"
         from_email = settings.DEFAULT_FROM_EMAIL
 
         send_mail(subject, message, from_email, [email])
+
+    def _generate_random_password(self):
+        password = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
+        return password
 
 
 class ReceptionLoginSerializer(serializers.Serializer):

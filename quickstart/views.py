@@ -89,11 +89,12 @@ class PharmacyLoginView(APIView):
 
 # --------------------------RECEPTION ---------------------------------
 class ReceptionCreate(APIView):
-    permission_classes = [AllowAny]
+    renderer_classes = [TemplateHTMLRenderer, JSONRenderer]
+    template_name = 'reception_profile_creation.html'
     def get(self, request):
-        reception_data =Receptionist.objects.select_related('user', 'branch').all()
+        reception_data =Receptionist.objects.all()
         serializer = ReceptionSerializer(reception_data, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response({"serializer":serializer.data}, status=status.HTTP_200_OK)
     def post(self, request):
         serializer = ReceptionSerializer(data=request.data)
         if serializer.is_valid():

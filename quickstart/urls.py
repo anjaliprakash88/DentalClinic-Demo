@@ -12,7 +12,7 @@ urlpatterns = [
     path('pharmacy/', PharmacyCreate.as_view(), name='pharmacyCreate'),
     path('pharmacylogin', PharmacyLoginView.as_view(), name='pharmacyloginview'),
 
-    path('reception', ReceptionCreate.as_view(), name='receptionCreate'),
+    path('reception/', ReceptionCreate.as_view(), name='receptionCreate'),
     path('receptionlogin', ReceptionLoginView.as_view(), name='receptionloginview'),
 
 ]
