@@ -1,5 +1,6 @@
 from django.core.serializers import serialize
 from django.shortcuts import render
+from  django.http import JsonResponse
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.renderers import TemplateHTMLRenderer, JSONRenderer
@@ -17,9 +18,11 @@ class BranchCreate(APIView):
     template_name = 'branch_creation.html'
 
     def get(self, request):
-        branches = Branch.objects.all()
-        serializer = BranchSerializer(branches, many=True)
-        return Response({"serializer": serializer.data}, status=status.HTTP_200_OK)
+        if request.META.get('HTTP_X_REQUESTED_WITH')=='XMLHttpRequest':
+            branches = Branch.objects.all()
+            serializer = BranchSerializer(branches, many=True)
+            return JsonResponse(serializer.data, safe=False)
+        return Response({}, template_name=self.template_name)
     def post(self, request):
         serializer = BranchSerializer(data=request.data)
         if serializer.is_valid():

@@ -77,20 +77,22 @@ class DoctorLoginSerializer(serializers.Serializer):
 
 class PharmacySerializer(serializers.ModelSerializer):
     user = UserSerializer()
+    branch = serializers.PrimaryKeyRelatedField(queryset=Branch.objects.all(), required=True)  # Ensure this handles ID correctly.
 
     class Meta:
         model = Pharmacy
-        fields = ['id', 'experience_years', 'qualification', 'phone_number', 'address', 'user']
+        fields = ['id', 'experience_years', 'qualification', 'phone_number', 'address', 'user', 'branch']
 
     def create(self, validated_data):
+        print("Validated Data Before Saving:", validated_data)  # Log validated data
         user_data = validated_data.pop('user', None)
 
-        # Generate a random password if not provided
+        # Handle password
         password = user_data.pop('password', None)
         if not password:
             password = self._generate_random_password()
 
-        # Generate the username from the first and last name if not provided
+        # Handle username (if not provided)
         username = user_data.get('username', None)
         if not username:
             username = f"{user_data['first_name'].lower()}_{user_data['last_name'].lower()}"
@@ -99,11 +101,16 @@ class PharmacySerializer(serializers.ModelSerializer):
         user_instance = get_user_model()(**user_data)
         user_instance.username = username  # Set the generated username
         user_instance.set_password(password)
-        user_instance.is_pharmacy = True
+        user_instance.is_pharmacy = True  # Ensure this field exists in your User model
         user_instance.save()
 
         # Create the Pharmacy instance
-        pharmacy_instance = Pharmacy.objects.create(user=user_instance, **validated_data)
+        pharmacy_instance = Pharmacy.objects.create(
+            user=user_instance,
+            **validated_data  # Django will automatically handle branch assignment
+        )
+
+        print("Pharmacy Instance Created:", pharmacy_instance)  # Log created pharmacy instance
 
         # Send the email with the username and password
         self.send_pharmacy_id_email(user_instance.email, user_instance.username, password)
@@ -121,6 +128,9 @@ class PharmacySerializer(serializers.ModelSerializer):
         # Generate a random password (you can adjust the length and characters as needed)
         password = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
         return password
+
+
+
 
 
 class PharmacyLoginSerializer(serializers.Serializer):

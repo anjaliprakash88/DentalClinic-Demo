@@ -137,5 +137,6 @@ EMAIL_HOST_USER = 'anjali.techfifo@gmail.com'
 EMAIL_HOST_PASSWORD = 'qwmd thzt zyjn iubi'
 DEFAULT_FROM_EMAIL = 'anjali.techfifo@gamil.com'
 
+APPEND_SLASH = False
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

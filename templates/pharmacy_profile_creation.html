@@ -32,16 +32,54 @@
             <label>Email</label>
             <input type="email" id="modal-email" placeholder="Enter email" required>
 
+            <label>Branch</label>
+            <select id="model-branch" required>
+                <option value="">Select a Branch</option>
+            </select>
+
             <input type="submit" value="Register">
         </form>
     </div>
 
     <script>
         $(document).ready(function() {
-            $('#creation').on('submit', function(event) {
-                event.preventDefault();  // Prevent form refresh
+          function fetchBranches() {
+    $.ajax({
+        url: `/branch/`,
+        type: 'GET',
+        headers:{
+            "X-Requested-With":"XMLHttpRequest"
+            },
+        success: function(response) {
+    console.log("Branch API Response:", response);  // Log the entire response for debugging
+    const branchSelect = $('#model-branch');
+    branchSelect.empty();
+    branchSelect.append(`<option value="">Select a branch</option>`);
 
-                // Get CSRF Token
+    // Ensure response is an array
+    if (Array.isArray(response)) {
+        response.forEach(branch => {
+            branchSelect.append(`<option value="${branch.id}">${branch.name}</option>`);
+        });
+    } else {
+        console.error("Expected an array but got:", response);
+        alert("Error: Unexpected data format received!");
+    }
+},
+
+        error: function(xhr) {
+            alert(`Failed to fetch branches: ${xhr.statusText}`);
+        }
+    });
+}
+
+            fetchBranches();
+
+
+            $('#creation').on('submit', function(event) {
+                event.preventDefault();
+
+
                 const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
                 // Collect Data
@@ -50,23 +88,27 @@
                     experience_years: parseInt($('#modal-experience-years').val(), 10),
                     qualification: $('#modal-qualification').val(),
                     phone_number: $('#modal-phone-number').val(),
+                    branch: parseInt($('#model-branch').val(), 10),
                     user: {
                         first_name: $('#modal-first-name').val(),
                         last_name: $('#modal-last-name').val(),
                         email: $('#modal-email').val(),
                     }
+
+
                 };
 
-                // AJAX Request
+console.log("Data Being sent: ", data);
                 $.ajax({
-                    url: `/pharmacy/`,
-                    type: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify(data),
-                    headers: {
-                        "X-CSRFToken": csrftoken  // Add CSRF Token
-                    },
-                })
+    url: `/pharmacy/`,
+    type: 'POST',
+    contentType: 'application/json',
+    data: JSON.stringify(data),
+    headers: {
+        "X-CSRFToken": csrftoken
+    },
+})
+
                 .done(function(response) {
                     alert('Pharmacy and user details updated successfully');
                     $('.modal-overlay, .modal').fadeOut();
